@@ -1,119 +1,126 @@
 # Aula Sync API
 
-Servicio de integración académica UNHEVAL → Moodle para **Escuela de Posgrado** (Id_Gen `03`, Fac. `70`). Reemplaza el panel Laravel legacy (`aula`) con una API FastAPI dockerizada.
+Servicio de integración académica UNHEVAL → Moodle para **Escuela de Posgrado** (Id_Gen `03`, Fac. `70`). API FastAPI con panel web de migración.
 
-## Requisitos
+**Moodle** se despliega por separado; en el servidor Moodle solo se instala el plugin [`local_aulasync`](https://github.com/saemhco/aulasync). Este repo es **solo el servidor API**.
 
-- Docker y Docker Compose (`docker compose`, plugin integrado en Docker Desktop)
-- Archivo de configuración `compose.yaml` en la raíz del proyecto
-- ~20 GB de espacio libre (backup SQL Server ~10 GB + datos restaurados)
-- Backup `DB_UNHEVAL.bak` en `../aula/DB_UNHEVAL.bak`
+## Puertos (no estándar)
 
-## Levantar el stack
+| Servicio | Puerto | Notas |
+|---|---|---|
+| **Aula Sync API** | `8092` | Panel y `/docs` |
+| **Moodle** | `8046` | Otro despliegue (WAMP, etc.) |
+| **SQL Server** | `11433` | Instancia nativa en Windows (evitar `1433` en el host) |
 
-Un solo comando levanta **SQL Server + restore del `.bak` + API**:
+---
+
+## Producción — Windows Server (recomendado)
+
+No requiere Docker. WAMP/Apache sirve **Moodle (PHP)**; esta API corre en **Python** aparte.
+
+### Requisitos en el servidor
+
+- Windows Server con **Python 3.12+**
+- **SQL Server** accesible (`DB_UNHEVAL`, puerto `11433` recomendado)
+- **Moodle** ya operativo + plugin `local_aulasync` instalado
+
+### Instalación
+
+```powershell
+cd C:\apps
+git clone https://github.com/saemhco/aula-sync.git
+cd aula-sync
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\install-windows.ps1
+```
+
+Editar `.env` (plantilla en `.env.windows.example`):
+
+```env
+DB_HOST=localhost
+DB_PORT=11433
+MOODLE_URL=http://localhost:8046
+MOODLE_PUBLIC_URL=http://moodle.tudominio.edu.pe:8046
+SETTINGS_DB_PATH=C:/apps/aula-sync/data/settings.db
+AULA_SYNC_PUBLIC_URL=http://servidor:8092
+APP_ADMIN_USERNAME=admin
+APP_ADMIN_PASSWORD=...
+INTEGRATION_TOKEN_KEY=...
+```
+
+### Arrancar
+
+```powershell
+.\scripts\run-api.ps1
+```
+
+- Panel: http://servidor:8092/
+- Docs: http://servidor:8092/docs
+- Health: http://servidor:8092/health
+
+### Servicio permanente
+
+Usar **NSSM** o **Programador de tareas** para ejecutar al inicio:
+
+```
+C:\apps\aula-sync\.venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8092
+```
+
+Directorio de trabajo: `C:\apps\aula-sync`. Variable `PYTHONPATH=C:\apps\aula-sync`.
+
+### Proxy opcional (WAMP / Apache)
+
+Si quieres publicar por el puerto 80/443 de Apache, deja uvicorn en `8092` y configura proxy reverso. Ver `scripts/apache-proxy.example.conf`.
+
+### Enlace con Moodle
+
+1. En Moodle: **Plugins → local_aulasync → Administrar token** → generar token.
+2. En Aula Sync: **Ajustes → destino Moodle** → pegar token y URLs.
+3. `AULA_SYNC_PUBLIC_URL` debe coincidir con la URL real de este API (Moodle bloquea el origen en la primera petición).
+
+---
+
+## Desarrollo local (Docker)
+
+Para desarrollo con SQL Server en contenedor:
 
 ```bash
-cd /Users/saulescandon/Dev/saem/aula-sync
-cp .env.example .env   # si no existe
+cp .env.example .env   # COMPOSE_PROFILES=local-db, DB_HOST=sqlserver
 docker compose up -d --build
+# o solo API + BD externa:
+docker compose -f compose.prod.yaml up -d --build
 ```
 
-- Panel web: http://localhost:8092/
-- API docs: http://localhost:8092/docs
-- `DB_HOST=sqlserver` en `.env` (host interno de Docker)
+- SQL Server en Docker se expone en host `11433` (`MSSQL_HOST_PORT`)
+- Backup inicial: `../aula/DB_UNHEVAL.bak` (~10 GB)
 
-La primera restauración de `../aula/DB_UNHEVAL.bak` (~10 GB) puede tardar varios minutos:
+### Apple Silicon
 
-```bash
-docker compose logs -f sqlserver
-```
+SQL Server en Docker requiere Rosetta en Docker Desktop.
 
-En arranques siguientes, el restore se omite si la BD ya existe.
+---
 
-### Apple Silicon (Mac M1/M2/M3/M4)
+## Uso del panel
 
-SQL Server 2022 requiere emulación amd64. Activa Rosetta en Docker Desktop:
+Login con usuario **Aula Sync** (`APP_ADMIN_*` en `.env`), no credenciales Moodle.
 
-1. **Settings → General → Use Rosetta for x86_64/amd64 emulation on Apple Silicon**
-2. Reinicia Docker Desktop
+Desde el panel:
 
-Si SQL Server falla con `Invalid mapping of address`, Rosetta no está activo.
+- Configurar origen académico y destino Moodle
+- Migrar cursos, usuarios, matrículas
+- Reportes y cerrar ciclo
 
-### SQL Server remoto (VPN UNHEVAL)
-
-Si usas BD remota en lugar del contenedor local, comenta el servicio `sqlserver` en `compose.yaml` y levanta solo la API:
-
-```bash
-docker compose up -d api
-```
-
-Y en `.env`: `DB_HOST=<host-remoto>`
-
-## Moodle local
-
-1. Levantar Moodle (monta scripts legacy de `../integracion`):
-
-```bash
-cd /Users/saulescandon/Dev/saem/moodle
-docker compose up -d
-```
-
-2. Crear tabla `user_token` y config `ciclo_academico`:
-
-```bash
-docker exec -i moodle_db mysql -uroot -prootpassword moodle < scripts/moodle-integracion-setup.sql
-```
-
-3. Crear usuario admin en Moodle si no existe, y usar esas credenciales en `/auth/login`.
-
-## Uso de la API
-
-### Panel web
-
-Abre http://localhost:8092/ e inicia sesión con credenciales de administrador Moodle. Desde ahí puedes:
-
-- Cargar y migrar cursos (individual o en lote)
-- Migrar alumnos y docentes
-- Matricular / desmatricular cursos activos
-- Generar reportes y cerrar ciclo académico
-
-La sesión Moodle se guarda en el navegador (`sessionStorage`).
+Sesión: header `X-Session-Token` (token `sess_…` del login).
 
 ### Login (API)
 
 ```bash
 curl -X POST http://localhost:8092/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin123!"}'
+  -d '{"username":"admin","password":"..."}'
 ```
 
-### Endpoints protegidos
-
-Incluir header en requests que consultan SQL Server:
-
-- `X-Moodle-Token`: token obtenido del login
-
-### Migrar curso
-
-```bash
-curl -X POST http://localhost:8092/courses/migrate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "YOUR_TOKEN",
-    "codcurso": "...",
-    "profesor": "12345678",
-    "grupo": "01",
-    "nomcurso": "Nombre del curso",
-    "anio": "2024",
-    "semestre": "01",
-    "fac": "70",
-    "eap": "10",
-    "codicur": "1205",
-    "tipacta": "01",
-    "seccion": "01"
-  }'
-```
+---
 
 ## Mapeo desde Laravel
 
@@ -131,10 +138,6 @@ curl -X POST http://localhost:8092/courses/migrate \
 | `GET /cerrarc/ciclo/{anio}` | `POST /cycles/{anio}/close` |
 | `GET /api/alumnos-inscritos` | `GET /reports/alumnos-inscritos` |
 | `GET /api/docentes-secundarios` | `GET /reports/docentes-secundarios` |
-
-## Fase 2
-
-Plugin Moodle `local_unheval` (scaffold en `moodle/moodle/local/unheval/`) reemplazará los scripts PHP legacy cuando el flujo esté validado.
 
 ---
 

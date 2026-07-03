@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     db_host: str = "sqlserver"
-    db_port: int = 1433
+    db_port: int = 1433  # red interna Docker; en host/Windows usar 11433
     db_database: str = "DB_UNHEVAL"
     db_username: str = "aulavirtualunh"
     db_password: str = "4ulavirtualunH20$20"

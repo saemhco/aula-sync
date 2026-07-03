@@ -1,0 +1,27 @@
+# Solo API — SQL Server ya existe fuera de Docker (Windows Server, VPN, etc.)
+# Uso: docker compose -f compose.prod.yaml up -d --build
+
+name: aula-sync
+
+services:
+  api:
+    build: .
+    container_name: aula_sync_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8092}:8092"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-11433}
+    volumes:
+      - ./data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8092"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8092/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
