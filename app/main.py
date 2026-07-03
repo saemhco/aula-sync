@@ -1,3 +1,10 @@
+"""
+Aula Sync API — integración académica UNHEVAL → Moodle.
+
+Desarrollado por Sumaq IT E.I.R.L.
+Contacto: https://github.com/saemhco
+"""
+
 from contextlib import asynccontextmanager
 from pathlib import Path
 

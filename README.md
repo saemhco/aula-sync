@@ -135,3 +135,8 @@ curl -X POST http://localhost:8092/courses/migrate \
 ## Fase 2
 
 Plugin Moodle `local_unheval` (scaffold en `moodle/moodle/local/unheval/`) reemplazará los scripts PHP legacy cuando el flujo esté validado.
+
+---
+
+**Desarrollado por Sumaq IT E.I.R.L.**  
+Contacto: [github.com/saemhco](https://github.com/saemhco)
