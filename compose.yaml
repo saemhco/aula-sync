@@ -1,0 +1,61 @@
+name: aula-sync
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: aula_sync_sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-AulaSync2024!Strong}
+      MSSQL_PID: Developer
+      DB_NAME: ${DB_DATABASE:-DB_UNHEVAL}
+      DB_USER: ${DB_USERNAME:-aulavirtualunh}
+      DB_PASSWORD: ${DB_PASSWORD:-4ulavirtualunH20$$20}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ../aula/DB_UNHEVAL.bak:/var/opt/mssql/backup/DB_UNHEVAL.bak:ro
+      - ./scripts/sqlserver-entrypoint.sh:/usr/local/bin/sqlserver-entrypoint.sh:ro
+      - ./scripts/restore-db.sh:/usr/local/bin/restore-db.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/sqlserver-entrypoint.sh"]
+    ulimits:
+      stack:
+        soft: 67108864
+        hard: 67108864
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "IF DB_ID('DB_UNHEVAL') IS NULL RAISERROR('DB not ready',16,1); SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 900s
+
+  api:
+    build: .
+    container_name: aula_sync_api
+    restart: unless-stopped
+    ports:
+      - "8092:8000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-sqlserver}
+      DB_PORT: 1433
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mssql_data:

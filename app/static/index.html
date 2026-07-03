@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula Sync — Panel de migración</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Configuración inicial obligatoria -->
+    <div id="settings-gate-view" class="settings-gate hidden">
+      <div class="settings-shell">
+        <header class="settings-topbar">
+          <div class="settings-topbar-brand">
+            <div class="brand-icon sm">AS</div>
+            <div>
+              <strong>Aula Sync</strong>
+              <span>Configuración del sistema</span>
+            </div>
+          </div>
+          <button type="button" id="settings-gate-logout" class="btn btn-logout-light">Cerrar sesión</button>
+        </header>
+        <div class="settings-card">
+          <div class="settings-intro">
+            <h1>Configuración inicial</h1>
+            <p>Define el periodo académico activo, el origen de datos UNHEVAL y el aula virtual Moodle de destino.</p>
+          </div>
+          <div id="settings-gate-form"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div id="login-view" class="login-view hidden">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="brand-icon">AS</div>
+          <h1>Aula Sync</h1>
+          <p id="login-config-info">Inicia sesión con tu cuenta de Aula Sync</p>
+        </div>
+        <form id="login-form" class="login-form">
+          <label>
+            Usuario
+            <input type="text" id="login-username" autocomplete="username" required>
+          </label>
+          <label>
+            Contraseña
+            <span class="password-field">
+              <input type="password" id="login-password" autocomplete="current-password" required>
+              <button type="button" id="login-password-toggle" class="password-toggle" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </span>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block" id="login-btn">Iniciar sesión</button>
+          <p id="login-error" class="form-error hidden"></p>
+        </form>
+        <p class="login-footer">
+          <a href="/docs" target="_blank">Documentación API</a>
+          ·
+          <span id="db-status-login" class="status-dot">Verificando BD…</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Panel -->
+    <div id="panel-view" class="panel-view hidden">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-brand">
+            <div class="brand-icon sm">AS</div>
+            <span class="sidebar-brand-text">Aula Sync</span>
+          </div>
+          <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Ocultar menú" title="Ocultar menú">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-tab="users">Usuarios</button>
+          <button class="nav-item" data-tab="courses">Cursos</button>
+          <button class="nav-item" data-tab="categories">Categorías</button>
+          <button class="nav-item" data-tab="cycle">Cerrar ciclo</button>
+          <button class="nav-item" data-tab="settings">Ajustes</button>
+        </nav>
+        <div class="sidebar-footer">
+          <a href="/docs" target="_blank">API docs</a>
+        </div>
+      </aside>
+
+      <button type="button" id="sidebar-expand" class="sidebar-expand-fab hidden" aria-label="Mostrar menú" title="Mostrar menú">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+      <div class="panel-body">
+        <header class="panel-header hidden" id="panel-header">
+          <button type="button" class="panel-header-col panel-header-period" id="config-strip-trigger" title="Editar periodo, origen y destino">
+            <span class="panel-header-period-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
+            <span id="config-summary-text" class="config-summary-text"></span>
+          </button>
+          <div class="panel-header-col panel-header-status">
+            <div id="header-db-status" class="header-db-chip" title="Estado de la base de datos">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+              <span class="header-db-label" id="db-status">BD</span>
+              <span class="header-db-dot" id="header-db-dot"></span>
+            </div>
+          </div>
+          <div class="panel-header-col panel-header-user">
+            <div class="header-user-menu">
+              <button type="button" id="header-user-btn" class="header-user-btn" aria-haspopup="true" aria-expanded="false">
+                <span class="user-avatar" id="user-avatar">?</span>
+                <span class="user-meta">
+                  <span class="user-name" id="user-name">Usuario</span>
+                  <span class="user-role">Administrador</span>
+                </span>
+                <svg class="user-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div id="user-dropdown" class="user-dropdown hidden">
+                <div class="user-dropdown-head">
+                  <span class="user-avatar lg" id="user-avatar-lg">?</span>
+                  <div>
+                    <strong id="user-dropdown-name">Usuario</strong>
+                    <span>Administrador Aula Sync</span>
+                  </div>
+                </div>
+                <button type="button" class="user-dropdown-item" id="user-menu-account">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Mi cuenta
+                </button>
+                <button type="button" class="user-dropdown-item" id="user-menu-settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                  Ajustes de migración
+                </button>
+                <button type="button" class="user-dropdown-item user-dropdown-danger" id="user-menu-logout">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div id="bulk-progress" class="bulk-progress hidden" aria-live="polite">
+          <div class="bulk-progress-head">
+            <strong id="bulk-progress-label">Migrando…</strong>
+            <span id="bulk-progress-count">0 / 0</span>
+          </div>
+          <div class="bulk-progress-track">
+            <div id="bulk-progress-bar" class="bulk-progress-bar"></div>
+          </div>
+          <p id="bulk-progress-detail" class="bulk-progress-detail"></p>
+        </div>
+
+        <main class="main">
+        <h2 id="page-title" class="page-title">Migración de usuarios</h2>
+
+        <!-- Ajustes -->
+        <section id="tab-settings" class="tab-panel">
+          <div class="settings-panel-intro">
+            <h3>Ajustes de migración</h3>
+            <p>Actualiza el periodo académico, el origen UNHEVAL o el aula virtual Moodle cuando cambie el ciclo o el servidor de destino.</p>
+          </div>
+          <div id="settings-panel-form"></div>
+        </section>
+
+        <!-- Usuarios -->
+        <section id="tab-users" class="tab-panel active">
+          <div class="toolbar">
+            <div class="filters filters-nested">
+              <label>Tipo
+                <select id="users-tipo">
+                  <option value="2">Docentes</option>
+                  <option value="1">Alumnos</option>
+                </select>
+              </label>
+              <label>Facultad
+                <select id="users-filter-facultad">
+                  <option value="">Todas las facultades</option>
+                </select>
+              </label>
+              <label>Escuela
+                <select id="users-filter-escuela" disabled>
+                  <option value="">Todas las escuelas</option>
+                </select>
+              </label>
+              <label class="grow">Buscar <input type="search" id="users-search" placeholder="Nombre, usuario o correo…"></label>
+            </div>
+            <div class="toolbar-actions">
+              <button id="users-load" class="btn btn-primary">Listar usuarios</button>
+              <button id="users-migrate-selected" class="btn btn-secondary" disabled>Migrar seleccionados</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="col-check"><input type="checkbox" id="users-select-all"></th>
+                  <th>Apellidos</th>
+                  <th>Nombres</th>
+                  <th>Usuario</th>
+                  <th>Correo</th>
+                  <th>Última migración</th>
+                  <th class="col-action">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="7" class="empty">Selecciona filtros y pulsa «Listar usuarios».</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Cursos -->
+        <section id="tab-courses" class="tab-panel">
+          <div class="toolbar">
+            <div class="filters filters-nested">
+              <label>Facultad
+                <select id="courses-filter-facultad">
+                  <option value="">Todas las facultades</option>
+                </select>
+              </label>
+              <label>Escuela
+                <select id="courses-filter-escuela" disabled>
+                  <option value="">Todas las escuelas</option>
+                </select>
+              </label>
+              <label class="filter-profe">Profesor
+                <div class="search-select" id="courses-filter-profe-wrap">
+                  <input type="text" class="search-select-input" id="courses-filter-profe-input" placeholder="Buscar profesor…" autocomplete="off" disabled>
+                  <input type="hidden" id="courses-filter-profe" value="">
+                  <div class="search-select-dropdown hidden" id="courses-filter-profe-dropdown" role="listbox"></div>
+                </div>
+              </label>
+              <label class="grow">Buscar <input type="search" id="courses-search" placeholder="Curso, código…"></label>
+            </div>
+            <div class="toolbar-actions">
+              <button id="courses-load" class="btn btn-primary">Cargar cursos</button>
+              <button id="courses-migrate-selected" class="btn btn-secondary" disabled>Migrar seleccionados</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="col-check"><input type="checkbox" id="courses-select-all"></th>
+                  <th>Facultad</th>
+                  <th>Escuela</th>
+                  <th>Curso</th>
+                  <th>Código</th>
+                  <th>Grupo</th>
+                  <th>Profesor</th>
+                  <th class="col-action">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="courses-tbody">
+                <tr><td colspan="8" class="empty">Pulsa «Cargar cursos» para listar el periodo configurado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Categorías Moodle -->
+        <section id="tab-categories" class="tab-panel">
+          <div class="toolbar">
+            <div class="filters">
+              <p class="toolbar-context">Migración masiva opcional. Al migrar un curso, las categorías se crean automáticamente si faltan en Moodle.</p>
+            </div>
+            <div class="toolbar-actions">
+              <button id="categories-load" class="btn btn-secondary">Cargar categorías</button>
+              <button id="categories-migrate" class="btn btn-primary">Migrar a Moodle</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nivel</th>
+                  <th>ID number</th>
+                  <th>Nombre</th>
+                  <th>Facultad</th>
+                  <th>Escuela</th>
+                  <th>Padre</th>
+                </tr>
+              </thead>
+              <tbody id="categories-tbody">
+                <tr><td colspan="6" class="empty">Pulsa «Cargar categorías» para listar las del periodo.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Ciclo -->
+        <section id="tab-cycle" class="tab-panel">
+          <div class="card card-warning">
+            <h3>Cerrar ciclo académico</h3>
+            <p>Esta acción ejecuta el cierre de ciclo en Moodle para el año del periodo activo (<strong id="cycle-period-label">—</strong>). Verifica la configuración antes de continuar.</p>
+            <div class="cycle-form">
+              <button id="cycle-close" class="btn btn-danger">Cerrar ciclo</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Log de actividad -->
+        <section class="activity-log">
+          <div class="activity-header">
+            <h3>Actividad reciente</h3>
+            <button id="clear-log" class="btn btn-ghost btn-sm">Limpiar</button>
+          </div>
+          <ul id="activity-list" class="activity-list"></ul>
+        </section>
+      </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal confirmación -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="modal-title">Confirmar</h3>
+      <p id="modal-body"></p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-ghost">Cancelar</button>
+        <button id="modal-confirm" class="btn btn-primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal cuenta -->
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-account></div>
+    <div class="modal-content modal-content-form">
+      <h3>Mi cuenta</h3>
+      <p class="modal-intro">Actualiza tu usuario o contraseña de acceso al panel.</p>
+      <form id="account-form" class="account-form">
+        <label>
+          Contraseña actual
+          <input type="password" id="account-current-password" autocomplete="current-password" required>
+        </label>
+        <label>
+          Nuevo usuario
+          <input type="text" id="account-new-username" autocomplete="username" placeholder="Dejar vacío para no cambiar">
+        </label>
+        <label>
+          Nueva contraseña
+          <input type="password" id="account-new-password" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+        </label>
+        <label>
+          Confirmar nueva contraseña
+          <input type="password" id="account-new-password-confirm" autocomplete="new-password">
+        </label>
+        <p id="account-form-error" class="form-error hidden"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-account>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="account-save-btn">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
