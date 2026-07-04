@@ -9,7 +9,7 @@ Set-Location $Root
 function Require-Python {
     $py = Get-Command python -ErrorAction SilentlyContinue
     if (-not $py) {
-        Write-Error "Python no encontrado. Instala 3.12+ y marca 'Add to PATH'."
+        Write-Error "Python no encontrado. Instala 3.12+ y marca Add to PATH."
     }
     $version = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
     $parts = $version.Split(".")
@@ -38,13 +38,13 @@ if (-not (Test-Path $dataDir)) {
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.windows.example" ".env"
-    Write-Host "Copiado .env.windows.example -> .env — edítalo antes de producción."
+    Write-Host "Copiado .env.windows.example -> .env (editarlo antes de produccion)."
 } else {
     Write-Host ".env ya existe; no se sobrescribe."
 }
 
 Write-Host ""
 Write-Host "Listo. Siguiente paso:"
-Write-Host "  1. Editar .env (SQL Server, Moodle, contraseñas)"
+Write-Host "  1. Editar .env (SQL Server, Moodle, passwords)"
 Write-Host "  2. .\scripts\run-api.ps1"
 Write-Host "  Panel: http://localhost:8092/"
