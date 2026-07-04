@@ -35,6 +35,11 @@ if (-not (Test-Path $dataDir)) {
     New-Item -ItemType Directory -Path $dataDir | Out-Null
     Write-Host "Carpeta data/ creada."
 }
+# Windows: quitar atributo solo-lectura en data/ (evita sqlite3.OperationalError)
+Get-ChildItem -Path $dataDir -Force -ErrorAction SilentlyContinue | ForEach-Object {
+    if ($_.PSIsContainer) { return }
+    $_.IsReadOnly = $false
+}
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.windows.example" ".env"
