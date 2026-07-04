@@ -263,11 +263,11 @@ def delete_destination(dest_id: int) -> bool:
 def get_active_selection() -> dict[str, Any]:
     origin_key = _get_config("active_origin")
     dest_raw = _get_config("active_destination_id")
-    destination = (
-        destination_with_plain_token(raw)
-        if (raw := _fetch_destination_row(int(dest_raw)))
-        else None
-    )
+    destination = None
+    if dest_raw:
+        raw = _fetch_destination_row(int(dest_raw))
+        if raw:
+            destination = destination_with_plain_token(raw)
     return {
         "origin_key": origin_key,
         "destination_id": int(dest_raw) if dest_raw else None,
