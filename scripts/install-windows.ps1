@@ -45,6 +45,6 @@ if (-not (Test-Path ".env")) {
 
 Write-Host ""
 Write-Host "Listo. Siguiente paso:"
-Write-Host "  1. Editar .env (SQL Server, Moodle, passwords)"
+Write-Host "  1. Editar .env (SQL Server, Moodle, credenciales)"
 Write-Host "  2. .\scripts\run-api.ps1"
 Write-Host "  Panel: http://localhost:8092/"

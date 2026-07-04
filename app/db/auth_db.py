@@ -1,4 +1,3 @@
-import os
 import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -32,8 +31,11 @@ def init_auth_db() -> None:
         )
         count = conn.execute("SELECT COUNT(*) FROM app_users").fetchone()[0]
         if count == 0:
-            username = os.environ.get("APP_ADMIN_USERNAME", "admin").strip()
-            password = os.environ.get("APP_ADMIN_PASSWORD", "admin123").strip()
+            from app.config import get_settings
+
+            settings = get_settings()
+            username = settings.app_admin_username.strip()
+            password = settings.app_admin_password.strip()
             if username and password:
                 conn.execute(
                     """

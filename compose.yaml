@@ -8,11 +8,11 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-AulaSync2024!Strong}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
       MSSQL_PID: Developer
       DB_NAME: ${DB_DATABASE:-DB_UNHEVAL}
-      DB_USER: ${DB_USERNAME:-aulavirtualunh}
-      DB_PASSWORD: ${DB_PASSWORD:-4ulavirtualunH20$$20}
+      DB_USER: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "${MSSQL_HOST_PORT:-11433}:1433"
     volumes:

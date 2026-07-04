@@ -12,14 +12,16 @@ class Settings(BaseSettings):
     db_host: str = "sqlserver"
     db_port: int = 1433  # red interna Docker; en host/Windows usar 11433
     db_database: str = "DB_UNHEVAL"
-    db_username: str = "aulavirtualunh"
-    db_password: str = "4ulavirtualunH20$20"
+    db_username: str = ""
+    db_password: str = ""
 
     moodle_url: str = "http://host.docker.internal:8046"
     moodle_public_url: str = "http://localhost:8046"
     settings_db_path: str = "/app/data/settings.db"
     integration_token_key: str = ""
     aula_sync_public_url: str = "http://localhost:8092"
+    app_admin_username: str = "admin"
+    app_admin_password: str = ""
 
 
 @lru_cache

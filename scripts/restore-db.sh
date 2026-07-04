@@ -3,8 +3,8 @@ set -euo pipefail
 
 SA_PASSWORD="${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD required}"
 DB_NAME="${DB_NAME:-DB_UNHEVAL}"
-DB_USER="${DB_USER:-aulavirtualunh}"
-DB_PASSWORD="${DB_PASSWORD:-4ulavirtualunH20\$20}"
+DB_USER="${DB_USER:?DB_USER required}"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD required}"
 SQL_HOST="${SQL_HOST:-localhost}"
 BACKUP="/var/opt/mssql/backup/DB_UNHEVAL.bak"
 SQLCMD="/opt/mssql-tools18/bin/sqlcmd"

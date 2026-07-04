@@ -1,4 +1,3 @@
-import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -32,7 +31,10 @@ CREATE TABLE IF NOT EXISTS migration_log (
 
 
 def _db_path() -> Path:
-    path = Path(os.environ.get("SETTINGS_DB_PATH", "/app/data/settings.db"))
+    from app.config import get_settings
+
+    configured = get_settings().settings_db_path.strip()
+    path = Path(configured) if configured else Path("/app/data/settings.db")
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -50,8 +52,11 @@ def init_db() -> None:
         _migrate_plain_tokens(conn)
         count = conn.execute("SELECT COUNT(*) FROM moodle_destinations").fetchone()[0]
         if count == 0:
-            moodle_url = os.environ.get("MOODLE_URL", "").strip()
-            moodle_public_url = os.environ.get("MOODLE_PUBLIC_URL", "").strip()
+            from app.config import get_settings
+
+            settings = get_settings()
+            moodle_url = settings.moodle_url.strip()
+            moodle_public_url = settings.moodle_public_url.strip()
             if moodle_url and moodle_public_url:
                 conn.execute(
                     """

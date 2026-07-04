@@ -144,6 +144,13 @@ a:hover { text-decoration: underline; }
 
 .form-error { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .login-footer { text-align: center; margin-top: 20px; font-size: 0.82rem; color: var(--text-muted); }
+.app-credit {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.app-credit a { color: var(--text-muted); }
 
 .status-dot::before {
   content: "";
