@@ -916,9 +916,11 @@
     try {
       const data = await api("/health");
       const ok = data.database === "connected";
+      const detail = ok ? "" : (data.database || "Sin respuesta de la BD");
       if (el.id === "db-status-login") {
         el.className = `status-dot ${ok ? "ok" : "error"}`;
         el.textContent = ok ? "BD conectada" : "BD sin conexión";
+        el.title = detail;
         return;
       }
       const btn = $("#header-db-status");
@@ -931,10 +933,11 @@
         label.textContent = ok ? "Conectada" : "Sin conexión";
         btn.title = ok ? "Base de datos conectada" : "Base de datos sin conexión";
       }
-    } catch {
+    } catch (err) {
       if (el.id === "db-status-login") {
         el.className = "status-dot error";
         el.textContent = "BD sin conexión";
+        el.title = err?.message || "No se pudo contactar la API";
         return;
       }
       const btn = $("#header-db-status");

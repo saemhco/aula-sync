@@ -2,8 +2,6 @@ name: aula-sync
 
 services:
   sqlserver:
-    profiles:
-      - local-db
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
     container_name: aula_sync_sqlserver
@@ -53,7 +51,7 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
-        required: false
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8092", "--reload"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8092/health"]
       interval: 15s

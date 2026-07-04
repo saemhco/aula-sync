@@ -11,6 +11,8 @@ def get_connection() -> pymssql.Connection:
         user=settings.db_username,
         password=settings.db_password,
         database=settings.db_database,
+        login_timeout=10,
+        timeout=30,
     )
 
 
