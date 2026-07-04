@@ -80,6 +80,11 @@ async def migrate_user(body: MigrateUserRequest, ctx: dict = Depends(require_con
         )
     except MoodleIntegrationError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if isinstance(result, dict) and result.get("status") is False:
+        raise HTTPException(
+            status_code=502,
+            detail=str(result.get("code") or "Error al migrar usuario"),
+        )
     migrated_at = settings_db.record_user_migration(
         body.usuario,
         ctx["destination"]["id"],

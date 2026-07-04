@@ -107,8 +107,8 @@ class MoodleClient:
         alumnos: list[dict],
         otros_profesores: list[str],
     ) -> dict:
+        self._resolve_integration_token(token)
         data: dict = {
-            "token": self._resolve_integration_token(token),
             "curso_codigo": curso_codigo,
             "profesor": profesor,
             "grupo": str(grupo),
@@ -119,7 +119,10 @@ class MoodleClient:
                 data[f"alumnos[{i}][{key}]"] = str(value) if value is not None else ""
         for i, profe in enumerate(otros_profesores):
             data[f"otros_profesores[{i}]"] = profe
-        return await self._post("curso.php", data)
+        result = await self._post_plugin("courses", data)
+        if isinstance(result, dict) and result.get("status") is False:
+            raise MoodleIntegrationError(str(result.get("code") or "Error al migrar curso"))
+        return result
 
     async def migrate_category(
         self,
@@ -167,16 +170,19 @@ class MoodleClient:
     async def migrate_user(
         self, token: str, usuario: str, nombres: str, apellidos: str, email: str
     ) -> dict:
-        return await self._post(
-            "usuario.php",
+        self._resolve_integration_token(token)
+        result = await self._post_plugin(
+            "users",
             {
-                "token": self._resolve_integration_token(token),
                 "usuario": usuario,
                 "nombres": nombres,
                 "apellidos": apellidos,
                 "email": email,
             },
         )
+        if isinstance(result, dict) and result.get("status") is False:
+            raise MoodleIntegrationError(str(result.get("code") or "Error al migrar usuario"))
+        return result
 
     async def enroll(
         self,
