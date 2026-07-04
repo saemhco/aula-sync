@@ -48,8 +48,9 @@ def decrypt_token(stored: str | None) -> str:
     payload = value[len(_PREFIX) :]
     try:
         return _fernet().decrypt(payload.encode("ascii")).decode("utf-8")
-    except InvalidToken as exc:
-        raise RuntimeError("No se pudo descifrar el token de integración almacenado") from exc
+    except InvalidToken:
+        # Clave distinta o datos corruptos: no tumbar login; reingresar token en Ajustes.
+        return ""
 
 
 def token_fingerprint(plain: str) -> str:
