@@ -23,3 +23,18 @@ def get_connection() -> pymssql.Connection:
         kwargs["encryption"] = settings.db_encryption
 
     return pymssql.connect(**kwargs)
+
+
+def fetch_all(query: str, params: tuple = ()) -> list[dict]:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(as_dict=True)
+        cursor.execute(query, params)
+        return list(cursor.fetchall())
+    finally:
+        conn.close()
+
+
+def fetch_one(query: str, params: tuple = ()) -> dict | None:
+    rows = fetch_all(query, params)
+    return rows[0] if rows else None
