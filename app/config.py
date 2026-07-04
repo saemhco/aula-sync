@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     db_database: str = "DB_UNHEVAL"
     db_username: str = ""
     db_password: str = ""
+    db_tds_version: str = ""
+    db_encryption: str = ""
 
     moodle_url: str = "http://host.docker.internal:8046"
     moodle_public_url: str = "http://localhost:8046"
