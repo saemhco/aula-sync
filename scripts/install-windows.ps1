@@ -1,5 +1,5 @@
 # Instala Aula Sync API en Windows Server (Python nativo, sin Docker).
-# Requiere Python 3.12+: https://www.python.org/downloads/
+# Requiere Python 3.10+: https://www.python.org/downloads/
 # Ejecutar en PowerShell: .\scripts\install-windows.ps1
 
 $ErrorActionPreference = "Stop"
@@ -9,12 +9,12 @@ Set-Location $Root
 function Require-Python {
     $py = Get-Command python -ErrorAction SilentlyContinue
     if (-not $py) {
-        Write-Error "Python no encontrado. Instala 3.12+ y marca Add to PATH."
+        Write-Error "Python no encontrado. Instala 3.10+ y marca Add to PATH."
     }
     $version = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
     $parts = $version.Split(".")
-    if ([int]$parts[0] -lt 3 -or ([int]$parts[0] -eq 3 -and [int]$parts[1] -lt 12)) {
-        Write-Error "Se requiere Python 3.12 o superior (detectado: $version)."
+    if ([int]$parts[0] -lt 3 -or ([int]$parts[0] -eq 3 -and [int]$parts[1] -lt 10)) {
+        Write-Error "Se requiere Python 3.10 o superior (detectado: $version)."
     }
     Write-Host "Python $version OK"
 }
