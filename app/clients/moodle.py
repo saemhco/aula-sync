@@ -61,6 +61,21 @@ class MoodleClient:
                 return html_match.group(1).strip()
         return text[:240]
 
+    async def _post_plugin(self, action: str, data: dict) -> dict:
+        url = f"{self.base_url}/local/aulasync/api.php?action={action}"
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                url,
+                data=data,
+                headers=self._headers(include_integration=True),
+            )
+            if response.is_success:
+                return response.json()
+            detail = self._parse_error_body(response.text)
+            raise MoodleIntegrationError(
+                f"Moodle respondió {response.status_code}: {detail}"
+            )
+
     async def _post(self, endpoint: str, data: dict, *, include_integration: bool = True) -> dict:
         url = f"{self.base_url}/integracion/{endpoint}"
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -113,13 +128,13 @@ class MoodleClient:
         name: str,
         parent_idnumber: str = "",
     ) -> dict:
+        self._resolve_integration_token(token)
         data = {
-            "token": self._resolve_integration_token(token),
             "idnumber": idnumber,
             "name": name,
             "parent_idnumber": parent_idnumber,
         }
-        result = await self._post("categorias.php", data)
+        result = await self._post_plugin("categories", data)
         if isinstance(result, dict) and result.get("status") is False:
             raise MoodleIntegrationError(str(result.get("code") or "Error al migrar categoría"))
         return result
