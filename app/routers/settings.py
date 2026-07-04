@@ -91,10 +91,13 @@ def set_active_config(body: ActiveConfigRequest, _: dict = Depends(require_sessi
         raise HTTPException(status_code=400, detail="Destino Moodle no encontrado")
 
     if body.integration_token and body.integration_token.strip():
-        updated = settings_db.update_destination_token(
-            body.destination_id,
-            body.integration_token.strip(),
-        )
+        try:
+            updated = settings_db.update_destination_token(
+                body.destination_id,
+                body.integration_token.strip(),
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not updated:
             raise HTTPException(status_code=404, detail="Destino Moodle no encontrado")
 

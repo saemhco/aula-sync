@@ -9,7 +9,9 @@ _PREFIX = "enc:v1:"
 
 
 def _derive_key() -> bytes:
-    raw = os.environ.get("INTEGRATION_TOKEN_KEY", "").strip()
+    from app.config import get_settings
+
+    raw = get_settings().integration_token_key.strip()
     if not raw:
         raw = os.environ.get("APP_SECRET", "").strip()
     if not raw:
